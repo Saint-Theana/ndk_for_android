@@ -25,7 +25,7 @@ import inspect
 import logging
 import platform
 import os
-import shutil
+import shutil_hack
 import stat
 import sys
 import tempfile
@@ -142,7 +142,7 @@ def get_clang_path_or_die(host_tag):
 def copy_directory_contents(src, dst):
     """Copies the contents of a directory, merging with the destination.
 
-    shutil.copytree requires that the destination does not exist. This function
+    shutil_hack.copytree requires that the destination does not exist. This function
     behaves like `cp -r`. That is, it merges the source and destination
     directories if appropriate.
     """
@@ -177,7 +177,7 @@ def copy_directory_contents(src, dst):
                 os.symlink(linkto, dst_file)
             else:
                 logger().debug('Copying %s', src_file)
-                shutil.copy2(src_file, dst_dir)
+                shutil_hack.copy2(src_file, dst_dir)
 
 
 def make_clang_scripts(install_dir, triple, api, windows, unified_headers):
@@ -202,9 +202,9 @@ def make_clang_scripts(install_dir, triple, api, windows, unified_headers):
         exe = '.exe'
 
     bin_dir = os.path.join(install_dir, 'bin')
-    shutil.move(os.path.join(bin_dir, 'clang' + exe),
+    shutil_hack.move(os.path.join(bin_dir, 'clang' + exe),
                 os.path.join(bin_dir, 'clang{}'.format(version_number) + exe))
-    shutil.move(os.path.join(bin_dir, 'clang++' + exe),
+    shutil_hack.move(os.path.join(bin_dir, 'clang++' + exe),
                 os.path.join(bin_dir, 'clang{}++'.format(
                     version_number) + exe))
 
@@ -248,9 +248,9 @@ def make_clang_scripts(install_dir, triple, api, windows, unified_headers):
     mode = os.stat(clangpp_path).st_mode
     os.chmod(clangpp_path, mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
-    shutil.copy2(os.path.join(install_dir, 'bin/clang'),
+    shutil_hack.copy2(os.path.join(install_dir, 'bin/clang'),
                  os.path.join(install_dir, 'bin', triple + '-clang'))
-    shutil.copy2(os.path.join(install_dir, 'bin/clang++'),
+    shutil_hack.copy2(os.path.join(install_dir, 'bin/clang++'),
                  os.path.join(install_dir, 'bin', triple + '-clang++'))
 
     if windows:
@@ -288,9 +288,9 @@ def make_clang_scripts(install_dir, triple, api, windows, unified_headers):
                 :done
             """.format(version=version_number, flags=flags)))
 
-        shutil.copy2(os.path.join(install_dir, 'bin/clang.cmd'),
+        shutil_hack.copy2(os.path.join(install_dir, 'bin/clang.cmd'),
                      os.path.join(install_dir, 'bin', triple + '-clang.cmd'))
-        shutil.copy2(os.path.join(install_dir, 'bin/clang++.cmd'),
+        shutil_hack.copy2(os.path.join(install_dir, 'bin/clang++.cmd'),
                      os.path.join(install_dir, 'bin', triple + '-clang++.cmd'))
 
 
@@ -310,7 +310,7 @@ def copy_gnustl_abi_headers(src_dir, dst_dir, gcc_ver, triple, abi,
     abi_dst_dir = os.path.join(
         dst_dir, 'include/c++', gcc_ver, triple, bits_dst_dir)
 
-    shutil.copytree(abi_src_dir, abi_dst_dir)
+    shutil_hack.copytree(abi_src_dir, abi_dst_dir)
 
 
 def get_src_libdir(src_dir, abi):
@@ -340,13 +340,13 @@ def copy_gnustl_libs(src_dir, dst_dir, triple, abi):
     if not os.path.exists(dst_libdir):
         os.makedirs(dst_libdir)
 
-    shutil.copy2(os.path.join(src_libdir, 'libgnustl_shared.so'), dst_libdir)
-    shutil.copy2(os.path.join(src_libdir, 'libsupc++.a'), dst_libdir)
+    shutil_hack.copy2(os.path.join(src_libdir, 'libgnustl_shared.so'), dst_libdir)
+    shutil_hack.copy2(os.path.join(src_libdir, 'libsupc++.a'), dst_libdir)
 
     # Copy libgnustl_static.a to libstdc++.a since that's what the world
     # expects. Can't do this reliably with libgnustl_shared.so because the
     # SONAME is wrong.
-    shutil.copy2(os.path.join(src_libdir, 'libgnustl_static.a'),
+    shutil_hack.copy2(os.path.join(src_libdir, 'libgnustl_static.a'),
                  os.path.join(dst_libdir, 'libstdc++.a'))
 
 
@@ -358,8 +358,8 @@ def copy_stlport_libs(src_dir, dst_dir, triple, abi):
     if not os.path.exists(dst_libdir):
         os.makedirs(dst_libdir)
 
-    shutil.copy2(os.path.join(src_libdir, 'libstlport_shared.so'), dst_libdir)
-    shutil.copy2(os.path.join(src_libdir, 'libstlport_static.a'),
+    shutil_hack.copy2(os.path.join(src_libdir, 'libstlport_shared.so'), dst_libdir)
+    shutil_hack.copy2(os.path.join(src_libdir, 'libstlport_static.a'),
                  os.path.join(dst_libdir, 'libstdc++.a'))
 
 
@@ -376,7 +376,7 @@ def create_toolchain(install_path, arch, api, gcc_path, clang_path,
     if unified_headers:
         unified_sysroot = os.path.join(NDK_DIR, 'sysroot')
         install_sysroot = os.path.join(install_path, 'sysroot')
-        shutil.copytree(unified_sysroot, install_sysroot)
+        shutil_hack.copytree(unified_sysroot, install_sysroot)
 
         arch_headers = os.path.join(unified_sysroot, 'usr/include', triple)
         copy_directory_contents(
@@ -385,14 +385,14 @@ def create_toolchain(install_path, arch, api, gcc_path, clang_path,
         lib_path = os.path.join(sysroot_path, 'usr/lib')
         lib_install = os.path.join(install_sysroot, 'usr/lib')
         if os.path.exists(lib_path):
-            shutil.copytree(lib_path, lib_install)
+            shutil_hack.copytree(lib_path, lib_install)
 
         lib64_path = os.path.join(sysroot_path, 'usr/lib64')
         lib64_install = os.path.join(install_sysroot, 'usr/lib64')
         if os.path.exists(lib64_path):
-            shutil.copytree(lib64_path, lib64_install)
+            shutil_hack.copytree(lib64_path, lib64_install)
     else:
-        shutil.copytree(sysroot_path, os.path.join(install_path, 'sysroot'))
+        shutil_hack.copytree(sysroot_path, os.path.join(install_path, 'sysroot'))
 
     prebuilt_path = os.path.join(NDK_DIR, 'prebuilt', host_tag)
     copy_directory_contents(prebuilt_path, install_path)
@@ -416,7 +416,7 @@ def create_toolchain(install_path, arch, api, gcc_path, clang_path,
 
     if stl == 'gnustl':
         gnustl_dir = os.path.join(NDK_DIR, 'sources/cxx-stl/gnu-libstdc++/4.9')
-        shutil.copytree(os.path.join(gnustl_dir, 'include'), cxx_headers)
+        shutil_hack.copytree(os.path.join(gnustl_dir, 'include'), cxx_headers)
 
         for abi in get_abis(arch):
             copy_gnustl_abi_headers(gnustl_dir, install_path, gcc_ver, triple,
@@ -444,23 +444,23 @@ def create_toolchain(install_path, arch, api, gcc_path, clang_path,
             '__cxxabi_config.h',
         ]
         for header in headers:
-            shutil.copy2(
+            shutil_hack.copy2(
                 os.path.join(libcxxabi_dir, 'include', header),
                 os.path.join(cxx_headers, header))
 
         for abi in get_abis(arch):
             src_libdir = get_src_libdir(libcxx_dir, abi)
             dest_libdir = get_dest_libdir(install_path, triple, abi)
-            shutil.copy2(os.path.join(src_libdir, 'libc++_shared.so'),
+            shutil_hack.copy2(os.path.join(src_libdir, 'libc++_shared.so'),
                          dest_libdir)
-            shutil.copy2(os.path.join(src_libdir, 'libc++_static.a'),
+            shutil_hack.copy2(os.path.join(src_libdir, 'libc++_static.a'),
                          dest_libdir)
-           # shutil.copy2(os.path.join(src_libdir, 'libandroid_support.a'),
+           # shutil_hack.copy2(os.path.join(src_libdir, 'libandroid_support.a'),
                          #dest_libdir)
-            shutil.copy2(os.path.join(src_libdir, 'libc++abi.a'), dest_libdir)
+            shutil_hack.copy2(os.path.join(src_libdir, 'libc++abi.a'), dest_libdir)
 
             if arch == 'arm':
-                shutil.copy2(os.path.join(src_libdir, 'libunwind.a'),
+                shutil_hack.copy2(os.path.join(src_libdir, 'libunwind.a'),
                              dest_libdir)
 
             # libc++ is different from the other STLs. It has a libc++.(a|so)
@@ -479,9 +479,9 @@ def create_toolchain(install_path, arch, api, gcc_path, clang_path,
             # TODO(danalbert): We should add linker scripts for the other STLs
             # too since it lets the user avoid the current mess of having to
             # always manually add `-lstlport_shared` (or whichever STL).
-            shutil.copy2(os.path.join(src_libdir, 'libc++.a'),
+            shutil_hack.copy2(os.path.join(src_libdir, 'libc++.a'),
                          os.path.join(dest_libdir, 'libstdc++.a'))
-            shutil.copy2(os.path.join(src_libdir, 'libc++.so'),
+            shutil_hack.copy2(os.path.join(src_libdir, 'libc++.so'),
                          os.path.join(dest_libdir, 'libstdc++.so'))
     elif stl == 'stlport':
         stlport_dir = os.path.join(NDK_DIR, 'sources/cxx-stl/stlport')
@@ -504,7 +504,7 @@ def create_toolchain(install_path, arch, api, gcc_path, clang_path,
             'gabixx_config.h',
         ]
         for header in headers:
-            shutil.copy2(
+            shutil_hack.copy2(
                 os.path.join(gabixx_dir, 'include', header),
                 os.path.join(cxx_headers, header))
 
@@ -604,12 +604,12 @@ def main():
             if args.force:
                 logger().info('Cleaning installation directory %s',
                               install_path)
-                shutil.rmtree(install_path)
+                shutil_hack.rmtree(install_path)
             else:
                 sys.exit('Installation directory already exists. Use --force.')
     else:
         tempdir = tempfile.mkdtemp()
-        atexit.register(shutil.rmtree, tempdir)
+        atexit.register(shutil_hack.rmtree, tempdir)
         install_path = os.path.join(tempdir, triple)
 
     create_toolchain(install_path, args.arch, api, gcc_path, clang_path,
@@ -622,7 +622,7 @@ def main():
             package_format = 'bztar'
 
         package_basename = os.path.join(args.package_dir, triple)
-        shutil.make_archive(
+        shutil_hack.make_archive(
             package_basename, package_format,
             root_dir=os.path.dirname(install_path),
             base_dir=os.path.basename(install_path))
